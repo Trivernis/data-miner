@@ -1,13 +1,16 @@
 import requests
-from torrequest import TorRequest
+import stem
+import time
+import random
 from fake_useragent import UserAgent
+from stem.control import Controller
 
 
 class Client:
 
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers['UserAgent'] = UserAgent().random
+    def __init__(self, session=None):
+        self.proxies = None
+        self.headers = {'UserAgent': UserAgent().random}
 
     def request(self, *args, method='GET', **kwargs):
         if method == 'GET':
@@ -24,26 +27,26 @@ class Client:
             raise Exception('Invalid HTTP method specified!')
 
     def get(self, *args, **kwargs):
-        return self.session.get(*args, **kwargs)
+        return requests.get(*args, proxies=self.proxies, headers=self.headers, **kwargs)
 
     def post(self, *args, **kwargs):
-        return self.session.get(*args, **kwargs)
+        return requests.get(*args, proxies=self.proxies, headers=self.headers, **kwargs)
 
     def put(self, *args, **kwargs):
-        return self.session.put(*args, **kwargs)
+        return requests.put(*args, proxies=self.proxies, headers=self.headers, **kwargs)
 
     def patch(self, *args, **kwargs):
-        return self.session.patch(*args, **kwargs)
+        return requests.patch(*args, proxies=self.proxies, headers=self.headers, **kwargs)
 
-    def delete(self,*args, **kwargs):
-        return self.session.delete(*args, **kwargs)
+    def delete(self, *args, **kwargs):
+        return requests.delete(*args, proxies=self.proxies, headers=self.headers, **kwargs)
 
     def close(self):
-        self.session.close()
+        self.headers = None
+        self.proxies = None
 
     def reset(self):
-        self.session.headers['UserAgent'] = UserAgent().random
-        self.session.cookies.clear()
+        self.headers['UserAgent'] = UserAgent().random
 
     def __enter__(self):
         return self
@@ -54,17 +57,30 @@ class Client:
 
 class TorClient(Client):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, proxy_port=9050, ctrl_port=9051, password=None):
+        self.proxy_port = proxy_port
+        self.ctrl_port = ctrl_port
         super().__init__()
-        self.tr = TorRequest(*args, **kwargs)
-        self.tr.session.headers['UserAgent'] = UserAgent().random
-        self.session = self.tr
+        self.ctrl = Controller.from_port(port=self.ctrl_port)
+        self.ctrl.authenticate(password=password)
+        self.ip_retrieval_sites = [
+            'http://ipecho.net/plain',
+            'https://ident.me',
+        ]
+        self.proxies = {
+            'http': 'socks5://127.0.0.1:%d' % self.proxy_port,
+            'https': 'socks5://127.0.0.1:%d' % self.proxy_port
+        }
 
     def new_identity(self):
-        self.tr.reset_identity()
-        print("[+] Changed IP to %s: " % self.get('https://ident.me').text)
+        print('[ ]  Requesting new ip adress')
+        self.ctrl.signal(stem.Signal.NEWNYM)
+        time.sleep(self.ctrl.get_newnym_wait())
+        print("[+] Changed IP to %s: " % self.get(random.choice(self.ip_retrieval_sites)).text)
+
+    def close(self):
+        self.ctrl.close()
 
     def reset(self):
         self.new_identity()
-        self.tr.session.cookies.clear()
-        self.tr.session.headers['UserAgent'] = UserAgent().random
+        self.headers['UserAgent'] = UserAgent().random

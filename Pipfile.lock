@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "06db23fe7606fa26a31e3b7af11b3de2e5245c2abbbd74db4e986e8ff2595ea7"
+            "sha256": "1b9a80175da06b66acee213480ffc51f4c7c2566c55ed79e717e786b4653e26b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -44,14 +44,6 @@
             ],
             "version": "==2.9"
         },
-        "pysocks": {
-            "hashes": [
-                "sha256:08e69f092cc6dbe92a0fdd16eeb9b9ffbc13cadfe5ca4c7bd92ffb078b293299",
-                "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5",
-                "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0"
-            ],
-            "version": "==1.7.1"
-        },
         "requests": {
             "hashes": [
                 "sha256:43999036bfa82904b6af1d99e4882b560e5e2c68e5c4b0aa03b655f3d7d73fee",
@@ -64,14 +56,8 @@
             "hashes": [
                 "sha256:a0b48ea6224e95f22aa34c0bc3415f0eb4667ddeae3dfb5e32a6920c185568c2"
             ],
-            "version": "==1.8.0"
-        },
-        "torrequest": {
-            "hashes": [
-                "sha256:3745d4ea3ffda98d7a034363c787adb37aab77bdab40094a4d937392cd4dae82"
-            ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==1.8.0"
         },
         "urllib3": {
             "hashes": [

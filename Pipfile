@@ -7,8 +7,8 @@ verify_ssl = true
 
 [packages]
 requests = "*"
-torrequest = "*"
 fake-useragent = "*"
+stem = "*"
 
 [requires]
 python_version = "3.8"
