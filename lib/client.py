@@ -73,7 +73,7 @@ class TorClient(Client):
         }
 
     def new_identity(self):
-        print('[ ]  Requesting new ip adress')
+        print('[ ] Requesting new ip adress')
         self.ctrl.signal(stem.Signal.NEWNYM)
         time.sleep(self.ctrl.get_newnym_wait())
         print("[+] Changed IP to %s: " % self.get(random.choice(self.ip_retrieval_sites)).text)
