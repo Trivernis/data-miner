@@ -24,7 +24,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Periodically mine data')
     parser.add_argument('url', type=str, help='the data endpoint url', nargs='+')
     parser.add_argument('-t', '--tor', action='store_true', help='If tor should be used for requests')
-    parser.add_argument('-o', '--output-dir', required=True, type=str, help='The output directory for the data')
+    parser.add_argument('-o', '--output-dir', default='data', type=str, help='The output directory for the data')
     parser.add_argument('-i', '--interval', default='1h', type=str, help='The interval in which the data is requested')
     parser.add_argument('-m', '--method', default='GET', type=str, help='The HTTP method that is used')
     parser.add_argument('-b', '--body', type=str, help='The file containing the requests payload/body.')
