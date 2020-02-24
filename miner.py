@@ -3,9 +3,10 @@ import argparse
 from lib.client import TorClient, Client
 from lib.utils import parse_duration
 from lib.io import FileManager
+from requests import ConnectionError
+from requests.exceptions import SSLError
 import time
 import os
-from os import path
 import mimetypes
 import base64
 import hashlib
@@ -28,26 +29,33 @@ def parse_arguments():
     parser.add_argument('-b', '--body', type=str, help='The file containing the requests payload/body.')
     parser.add_argument('-p', '--tor-password', type=str, help='The password used for the tor control port.')
     parser.add_argument('-z', '--compress', action='store_true', help='If the data should be compressed')
+    parser.add_argument('--no-verify', action='store_true', help='Skips the verification of ssl certificates')
     return parser.parse_args()
 
 
-def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GET', interval=1800, body=None):
+def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GET', verify=True, interval=1800, body=None):
     while True:
         try:
             for url in urls:
-                req = client.request(url, method=method, data=body)
-                if req.status_code == 200:
-                    extension = mimetypes.guess_extension(req.headers['content-type'].split(';')[0])
-                    print('[+] Request to %s succeeded: mime: %s, timing: %ss' %
-                          (url, req.headers['content-type'], req.elapsed.total_seconds()))
-                    d = get_folder_name(url)
-                    f_name = time.strftime('%m-%d-%y_%H-%M-%S') + extension
-                    with fm.get_file(d, f_name) as f:
-                        f.write(req.text)
-                    fm.store_file(d, f_name)
-                    print('[+] Successfully stored response data as %s ' % f_name)
-                else:
-                    print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
+                try:
+                    req = client.request(url, method=method, data=body, verify=verify)
+                    if req.status_code == 200:
+                        extension = mimetypes.guess_extension(req.headers['content-type'].split(';')[0])
+                        print('[+] Request to %s succeeded: mime: %s, timing: %ss' %
+                              (url, req.headers['content-type'], req.elapsed.total_seconds()))
+                        d = get_folder_name(url)
+                        f_name = time.strftime('%m-%d-%y_%H-%M-%S') + extension
+                        with fm.get_file(d, f_name) as f:
+                            f.write(req.text)
+                        fm.store_file(d, f_name)
+                        print('[+] Successfully stored response data as %s ' % f_name)
+                    else:
+                        print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
+                except SSLError:
+                    print('There is a problem with the certificate of %s' % url)
+                    print('To ignore that please pass the --no-verify flag')
+                except ConnectionError as e:
+                    print('Failed to connect to %s: %s' % (url, e))
             client.reset()
             print('[ ] Pausing for %ss' % interval)
             time.sleep(interval)
@@ -91,7 +99,7 @@ def main():
         body = open(args.body, 'rb')
     fm = FileManager(args.output_dir, dirs, compress=args.compress)
     print('[ ] Starting request loop...')
-    request_loop(client, args.url, fm, args.method, int(interval.total_seconds()), body=body)
+    request_loop(client, args.url, fm, args.method, not args.no_verify, int(interval.total_seconds()), body=body)
 
 
 if __name__ == '__main__':
