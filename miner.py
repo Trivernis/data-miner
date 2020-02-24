@@ -23,7 +23,8 @@ def parse_arguments():
     parser.add_argument('-o', '--output-dir', required=True, type=str, help='The output directory for the data')
     parser.add_argument('-i', '--interval', default='1h', type=str, help='The interval in which the data is requested')
     parser.add_argument('-m', '--method', default='GET', type=str, help='The HTTP method that is used')
-    parser.add_argument('-p', '--payload-file', type=str, help='The file containing the requests payload.')
+    parser.add_argument('-b', '--body', type=str, help='The file containing the requests payload/body.')
+    parser.add_argument('-p', '--tor-password', type=str, help='The password used for the tor control port.')
     return parser.parse_args()
 
 
@@ -59,7 +60,7 @@ def main():
         print("[-] The interval must be greater than one second (this is not a dos tool).")
         exit(1)
     if args.tor:
-        client = TorClient()
+        client = TorClient(password=args.tor_password)
     else:
         client = Client()
     if not os.path.exists(args.output_dir):
@@ -81,8 +82,8 @@ def main():
     with open(mapping_file, 'w') as mf:
         json.dump(mapping, mf, indent='  ')
     body = None
-    if args.payload_file:
-        body = open(args.payload_file, 'rb')
+    if args.body:
+        body = open(args.body, 'rb')
     print('[ ] Starting request loop...')
     request_loop(client, args.url, args.output_dir, args.method, int(interval.total_seconds()), body=body)
 
