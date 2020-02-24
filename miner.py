@@ -51,9 +51,12 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
                 try:
                     req = client.request(url, method=method, data=body, verify=verify)
                     if req.status_code == 200:
-                        extension = mimetypes.guess_extension(req.headers['content-type'].split(';')[0])
+                        content_type = 'text/plain'
+                        if 'content-type' in req.headers.keys():
+                            content_type = req.headers['content-type'].split(';')[0]
+                        extension = mimetypes.guess_extension(content_type)
                         print('[+] Request to %s succeeded: mime: %s, timing: %ss' %
-                              (url, req.headers['content-type'], req.elapsed.total_seconds()))
+                              (url, content_type, req.elapsed.total_seconds()))
                         f_name = time.strftime('%d-%m-%y_%H-%M-%S') + extension
                         with fm.get_file(d, f_name) as f:
                             f.write(req.text)
