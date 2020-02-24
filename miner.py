@@ -11,6 +11,7 @@ import mimetypes
 import base64
 import hashlib
 import json
+import random
 
 
 def get_folder_name(url: str) -> str:
@@ -34,31 +35,44 @@ def parse_arguments():
 
 
 def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GET', verify=True, interval=1800, body=None):
+    random_factor = round(interval/10)
+    names = {}
+    for url in urls:
+        names[url] = get_folder_name(url)
+        status_fname = os.path.join(fm.data_dir, '%s-status.csv' % names[url])
+        if not os.path.exists(status_fname):
+            with open(status_fname, 'w') as f:
+                f.write('datetime,status-code,timing\n')
     while True:
         try:
             for url in urls:
+                d = names[url]
+                status_file = open(os.path.join(fm.data_dir, '%s-status.csv' % d), 'a')
                 try:
                     req = client.request(url, method=method, data=body, verify=verify)
                     if req.status_code == 200:
                         extension = mimetypes.guess_extension(req.headers['content-type'].split(';')[0])
                         print('[+] Request to %s succeeded: mime: %s, timing: %ss' %
                               (url, req.headers['content-type'], req.elapsed.total_seconds()))
-                        d = get_folder_name(url)
-                        f_name = time.strftime('%m-%d-%y_%H-%M-%S') + extension
+                        f_name = time.strftime('%d-%m-%y_%H-%M-%S') + extension
                         with fm.get_file(d, f_name) as f:
                             f.write(req.text)
                         fm.store_file(d, f_name)
                         print('[+] Successfully stored response data as %s ' % f_name)
                     else:
                         print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
+                    status_file.write('%s,%s,%s\n' % (time.strftime('%d.%m.%y %H:%M:%S'), req.status_code, req.elapsed.total_seconds()))
                 except SSLError:
                     print('There is a problem with the certificate of %s' % url)
                     print('To ignore that please pass the --no-verify flag')
                 except ConnectionError as e:
                     print('Failed to connect to %s: %s' % (url, e))
+                    status_file.write('%s,0,0\n' % time.strftime('%d.%m.%y %H:%M:%S'))
+                status_file.close()
             client.reset()
-            print('[ ] Pausing for %ss' % interval)
-            time.sleep(interval)
+            pause_duration = interval + random.randint(-random_factor, random_factor)
+            print('[ ] Pausing for %ss' % pause_duration)
+            time.sleep(pause_duration)
         except KeyboardInterrupt:
             client.close()
             return

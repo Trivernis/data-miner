@@ -2,8 +2,11 @@ import requests
 import stem
 import time
 import random
+import warnings
 from fake_useragent import UserAgent
 from stem.control import Controller
+
+warnings.filterwarnings('once', module='urllib3')
 
 
 class Client:

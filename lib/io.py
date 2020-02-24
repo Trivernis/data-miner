@@ -2,6 +2,9 @@ import os
 from os import path
 import zipfile
 import tempfile
+import warnings
+
+warnings.filterwarnings('ignore', module='zipfile')
 
 
 class FileManager:
@@ -20,17 +23,25 @@ class FileManager:
             if not path.exists(path.join(self._data_dir, d)):
                 os.mkdir(path.join(self._data_dir, d))
 
-    def get_file(self, directory, name):
+    def get_file(self, directory, name, mode='w'):
         """
         Opens a new file with the given name in the directory
+        :param mode:
         :param directory:
         :param name:
         :return:
         """
         if self.compress:
-            return open(path.join(self._tmpdir, name), 'w')
+            f_name = path.join(self._tmpdir, name)
+            if mode != 'w':
+                z_name = path.join(self._data_dir, directory + '.zip')
+                with get_zip(z_name) as zf:
+                    if name in zf.namelist():
+                        zf.extract(name, self._tmpdir)
+                    zf.close()
+            return open(f_name, mode)
         else:
-            return open(path.join(self._data_dir, directory, name), 'w')
+            return open(path.join(self._data_dir, directory, name), mode)
 
     def store_file(self, directory, name):
         """
@@ -40,12 +51,20 @@ class FileManager:
         :return:
         """
         if self.compress:
-            mode = 'w'
             z_name = path.join(self._data_dir, directory + '.zip')
-            if path.exists(z_name):
-                mode = 'a'
-            with zipfile.ZipFile(z_name, mode, compression=zipfile.ZIP_LZMA) as zf:
+            with get_zip(z_name) as zf:
                 f_path = path.join(self._tmpdir, name)
                 zf.write(f_path, name)
                 zf.close()
                 os.remove(f_path)
+
+    @property
+    def data_dir(self):
+        return self._data_dir
+
+
+def get_zip(name):
+    mode = 'w'
+    if path.exists(name):
+        mode = 'a'
+    return zipfile.ZipFile(name, mode, compression=zipfile.ZIP_DEFLATED)
