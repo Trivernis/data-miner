@@ -67,7 +67,7 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
                     print('To ignore that please pass the --no-verify flag')
                 except ConnectionError as e:
                     print('Failed to connect to %s: %s' % (url, e))
-                    status_file.write('%s,0,0\n' % time.strftime('%d.%m.%y %H:%M:%S'))
+                    status_file.write('%s,0,0\n' % time.strftime('%d.%m.%y_%H:%M:%S'))
                 status_file.close()
             client.reset()
             pause_duration = interval + random.randint(-random_factor, random_factor)
