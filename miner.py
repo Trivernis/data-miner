@@ -42,7 +42,7 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
         status_fname = os.path.join(fm.data_dir, '%s-status.csv' % names[url])
         if not os.path.exists(status_fname):
             with open(status_fname, 'w') as f:
-                f.write('datetime,status-code,timing\n')
+                f.write('datetime,status-code,timing,content-length\n')
     while True:
         try:
             for url in urls:
@@ -64,13 +64,13 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
                         print('[+] Successfully stored response data as %s ' % f_name)
                     else:
                         print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
-                    status_file.write('%s,%s,%s\n' % (time.strftime('%d.%m.%y_%H:%M:%S'), req.status_code, req.elapsed.total_seconds()))
+                    status_file.write('%s,%s,%s,%s\n' % (time.strftime('%d.%m.%y_%H:%M:%S'), req.status_code, req.elapsed.total_seconds(), len(req.text)))
                 except SSLError:
                     print('There is a problem with the certificate of %s' % url)
                     print('To ignore that please pass the --no-verify flag')
                 except ConnectionError as e:
                     print('Failed to connect to %s: %s' % (url, e))
-                    status_file.write('%s,0,0\n' % time.strftime('%d.%m.%y_%H:%M:%S'))
+                    status_file.write('%s,0,0,0\n' % time.strftime('%d.%m.%y_%H:%M:%S'))
                 status_file.close()
             client.reset()
             pause_duration = interval + random.randint(-random_factor, random_factor)
