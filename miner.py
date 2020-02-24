@@ -45,6 +45,7 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
                 f.write('datetime,status-code,timing,content-length\n')
     while True:
         try:
+            random.shuffle(urls)
             for url in urls:
                 d = names[url]
                 status_file = open(os.path.join(fm.data_dir, '%s-status.csv' % d), 'a')
