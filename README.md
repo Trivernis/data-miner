@@ -16,7 +16,7 @@ pipenv install
 ## Usage
 
 ```
-usage: miner.py [-h] [-t] -o OUTPUT_DIR [-i INTERVAL] [-m METHOD] [-p PAYLOAD_FILE] url
+usage: miner.py [-h] [-t] -o OUTPUT_DIR [-i INTERVAL] [-m METHOD] [-b BODY] [-p TOR_PASSWORD] [-z] url [url ...]
 
 Periodically mine data
 
@@ -32,8 +32,10 @@ optional arguments:
                         The interval in which the data is requested
   -m METHOD, --method METHOD
                         The HTTP method that is used
-  -p PAYLOAD_FILE, --payload-file PAYLOAD_FILE
-                        The file containing the requests payload.
+  -b BODY, --body BODY  The file containing the requests payload/body.
+  -p TOR_PASSWORD, --tor-password TOR_PASSWORD
+                        The password used for the tor control port.
+  -z, --compress        If the data should be compressed
 ```
 
 ## License

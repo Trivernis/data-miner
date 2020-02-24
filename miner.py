@@ -2,8 +2,10 @@
 import argparse
 from lib.client import TorClient, Client
 from lib.utils import parse_duration
+from lib.io import FileManager
 import time
 import os
+from os import path
 import mimetypes
 import base64
 import hashlib
@@ -25,10 +27,11 @@ def parse_arguments():
     parser.add_argument('-m', '--method', default='GET', type=str, help='The HTTP method that is used')
     parser.add_argument('-b', '--body', type=str, help='The file containing the requests payload/body.')
     parser.add_argument('-p', '--tor-password', type=str, help='The password used for the tor control port.')
+    parser.add_argument('-z', '--compress', action='store_true', help='If the data should be compressed')
     return parser.parse_args()
 
 
-def request_loop(client: Client, urls: [str], out_dir: str, method: str = 'GET', interval=1800, body=None):
+def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GET', interval=1800, body=None):
     while True:
         try:
             for url in urls:
@@ -37,9 +40,12 @@ def request_loop(client: Client, urls: [str], out_dir: str, method: str = 'GET',
                     extension = mimetypes.guess_extension(req.headers['content-type'].split(';')[0])
                     print('[+] Request to %s succeeded: mime: %s, timing: %ss' %
                           (url, req.headers['content-type'], req.elapsed.total_seconds()))
-                    with open('%s/%s/%s%s' % (out_dir, get_folder_name(url),
-                                              time.strftime('%m-%d-%y_%H-%M-%S'), extension), 'w') as f:
+                    d = get_folder_name(url)
+                    f_name = time.strftime('%m-%d-%y_%H-%M-%S') + extension
+                    with fm.get_file(d, f_name) as f:
                         f.write(req.text)
+                    fm.store_file(d, f_name)
+                    print('[+] Successfully stored response data as %s ' % f_name)
                 else:
                     print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
             client.reset()
@@ -73,19 +79,19 @@ def main():
                 mapping = json.load(mf)
             except Exception as e:
                 print(e)
+    dirs = []
     for url in args.url:
         folder_name = get_folder_name(url)
-        folder_path = '%s/%s' % (args.output_dir, folder_name)
         mapping[url] = folder_name
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
+        dirs.append(folder_name)
     with open(mapping_file, 'w') as mf:
         json.dump(mapping, mf, indent='  ')
     body = None
     if args.body:
         body = open(args.body, 'rb')
+    fm = FileManager(args.output_dir, dirs, compress=args.compress)
     print('[ ] Starting request loop...')
-    request_loop(client, args.url, args.output_dir, args.method, int(interval.total_seconds()), body=body)
+    request_loop(client, args.url, fm, args.method, int(interval.total_seconds()), body=body)
 
 
 if __name__ == '__main__':
