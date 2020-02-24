@@ -61,7 +61,7 @@ def request_loop(client: Client, urls: [str], fm: FileManager, method: str = 'GE
                         print('[+] Successfully stored response data as %s ' % f_name)
                     else:
                         print('[-] Request failed with code %s: %s' % (req.status_code, req.text))
-                    status_file.write('%s,%s,%s\n' % (time.strftime('%d.%m.%y %H:%M:%S'), req.status_code, req.elapsed.total_seconds()))
+                    status_file.write('%s,%s,%s\n' % (time.strftime('%d.%m.%y_%H:%M:%S'), req.status_code, req.elapsed.total_seconds()))
                 except SSLError:
                     print('There is a problem with the certificate of %s' % url)
                     print('To ignore that please pass the --no-verify flag')
